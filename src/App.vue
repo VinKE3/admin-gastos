@@ -1,5 +1,15 @@
 <script setup>
+import { ref } from "vue";
 import Prespuesto from "./components/Presupuesto.vue";
+import ControlPresupuesto from "./components/ControlPresupuesto.vue";
+import iconoNuevoGasto from "./assets/img/nuevo-gasto.svg";
+const presupuesto = ref(0);
+const disponible = ref(0);
+
+const definirPresupuesto = (cantidad) => {
+  presupuesto.value = cantidad;
+  disponible.value = cantidad;
+};
 </script>
 
 <template>
@@ -7,10 +17,22 @@ import Prespuesto from "./components/Presupuesto.vue";
     <header>
       <h1>Planificador de Gastos</h1>
       <div class="contenedor-header contenedor sombra">
-        <Prespuesto />
+        <Prespuesto
+          v-if="presupuesto === 0"
+          @definir-presupuesto="definirPresupuesto"
+        />
+        <ControlPresupuesto
+          v-else
+          :presupuesto="presupuesto"
+          :disponible="disponible"
+        />
       </div>
     </header>
-    <Filtro />
+    <main>
+      <div class="crear-gasto">
+        <img :src="iconoNuevoGasto" />
+      </div>
+    </main>
   </div>
 </template>
 

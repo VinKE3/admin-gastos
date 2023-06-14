@@ -1,6 +1,28 @@
-<script setup></script>
+<script setup>
+import { ref } from "vue";
+import Alerta from "./Alerta.vue";
+const presupuesto = ref(0);
+const error = ref("");
+
+const emit = defineEmits(["definirPresupuesto"]);
+
+const definirPresupuesto = () => {
+  if (presupuesto.value <= 0 || presupuesto.value === "") {
+    error.value = "El presupuesto es invalido";
+    setTimeout(() => {
+      error.value = "";
+    }, 3000);
+
+    return;
+  }
+  emit("definirPresupuesto", presupuesto.value);
+};
+</script>
 <template>
-  <form class="presupuesto">
+  <form class="presupuesto" @submit.prevent="definirPresupuesto">
+    <Alerta v-if="error">
+      {{ error }}
+    </Alerta>
     <div class="campo">
       <label for="nuevo-presupuesto">Define tu Presupuesto Inicial</label>
       <input
@@ -8,6 +30,7 @@
         class="nuevo-presupuesto"
         placeholder="Añade tu Presupuesto"
         type="number"
+        v-model="presupuesto"
       />
     </div>
     <input type="submit" value="Definir Presupuesto" />
