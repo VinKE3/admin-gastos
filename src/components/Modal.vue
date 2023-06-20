@@ -1,6 +1,6 @@
 <script setup>
 import cerrarModal from "../assets/img/cerrar.svg";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import Alerta from "./Alerta.vue";
 const error = ref("");
 const emit = defineEmits([
@@ -27,9 +27,24 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  disponible: {
+    type: Number,
+    required: true,
+  },
+  id: {
+    type: [String, null],
+    required: true,
+  },
 });
+
+const old = props.cantidad;
+
+const isEditing = computed(() => {
+  return props.id;
+});
+
 const agregarGasto = () => {
-  const { nombre, cantidad, categoria } = props;
+  const { nombre, cantidad, categoria, disponible, id } = props;
   if ([nombre, cantidad, categoria].includes("")) {
     error.value = "Todos los campos son obligatorios";
     setTimeout(() => {
@@ -37,12 +52,36 @@ const agregarGasto = () => {
     }, 3000);
     return;
   }
+  //?validamos que la cantidad sea valida
   if (cantidad <= 0 || isNaN(cantidad)) {
     error.value = "Cantidad no valida";
     setTimeout(() => {
       error.value = "";
     }, 3000);
     return;
+  }
+  //?validamos que el usuario no gaste mas del presupuesto inicial
+  if (id) {
+    //?tomar en cuenta el gasto ya realizado
+    console.log("id", id);
+    console.log(old);
+    console.log(disponible);
+    console.log(cantidad);
+    if (cantidad > old + disponible) {
+      error.value = "No puedes gastar mas de lo que tienes";
+      setTimeout(() => {
+        error.value = "";
+      }, 3000);
+      return;
+    }
+  } else {
+    if (cantidad > disponible) {
+      error.value = "No puedes gastar mas de lo que tienes";
+      setTimeout(() => {
+        error.value = "";
+      }, 3000);
+      return;
+    }
   }
   emit("guardar-gasto");
 };
@@ -57,7 +96,7 @@ const agregarGasto = () => {
       :class="[modal.animarModal ? 'animar' : 'cerrar']"
     >
       <form class="nuevo-gasto" @submit.prevent="agregarGasto">
-        <legend>Nuevo Gasto</legend>
+        <legend>{{ isEditing ? "Editar Gasto" : "Nuevo Gasto" }}</legend>
         <Alerta v-if="error"> {{ error }}</Alerta>
         <div class="campo">
           <label for="nombre">Nombre Gasto:</label>
@@ -96,7 +135,10 @@ const agregarGasto = () => {
             <option value="suscripciones">Suscripciones</option>
           </select>
         </div>
-        <input type="submit" value="Añadir Gasto" />
+        <input
+          type="submit"
+          :value="isEditing ? 'Editar gasto' : 'Agregar gasto'"
+        />
       </form>
     </div>
   </div>

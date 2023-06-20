@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive } from "vue";
+import { ref, reactive, watch } from "vue";
 import Prespuesto from "./components/Presupuesto.vue";
 import ControlPresupuesto from "./components/ControlPresupuesto.vue";
 import iconoNuevoGasto from "./assets/img/nuevo-gasto.svg";
@@ -8,6 +8,7 @@ import Gasto from "./components/Gasto.vue";
 import { generarId } from "./helpers";
 const presupuesto = ref(0);
 const disponible = ref(0);
+const gastado = ref(0);
 const gasto = reactive({
   nombre: "",
   cantidad: 0,
@@ -22,6 +23,32 @@ const modal = reactive({
   mostrarModal: false,
   animarModal: false,
 });
+
+watch(
+  gastos,
+  () => {
+    const totalGastado = gastos.value.reduce(
+      (total, gasto) => gasto.cantidad + total,
+      0
+    );
+    gastado.value = totalGastado;
+    disponible.value = presupuesto.value - totalGastado;
+  },
+  {
+    deep: true,
+  }
+);
+watch(
+  modal,
+  () => {
+    if (!modal.mostrarModal) {
+      reiniciarFormulario();
+    }
+  },
+  {
+    deep: true,
+  }
+);
 
 const mostrarModal = () => {
   modal.mostrarModal = true;
@@ -43,8 +70,27 @@ const definirPresupuesto = (cantidad) => {
 };
 
 const guardarGasto = () => {
-  gastos.value.push({ ...gasto, id: generarId() });
+  if (gasto.id) {
+    //?editando
+    const { id } = gasto;
+    const indice = gastos.value.findIndex((gasto) => gasto.id === id);
+    gastos.value[indice] = { ...gasto };
+  } else {
+    //?agregando
+    gastos.value.push({ ...gasto, id: generarId() });
+  }
+
   //quiero reiniciar el gasto
+  reiniciarFormulario();
+  cerrarModal();
+};
+const seleccionarGasto = (id) => {
+  const gastoSeleccionado = gastos.value.find((gasto) => gasto.id === id);
+  Object.assign(gasto, gastoSeleccionado);
+  mostrarModal();
+};
+
+const reiniciarFormulario = () => {
   Object.assign(gasto, {
     nombre: "",
     cantidad: 0,
@@ -52,12 +98,11 @@ const guardarGasto = () => {
     id: null,
     fecha: Date.now(),
   });
-  cerrarModal();
 };
 </script>
 
 <template>
-  <div>
+  <div :class="{ fijar: modal.mostrarModal }">
     <header>
       <h1>Planificador de Gastos</h1>
       <div class="contenedor-header contenedor sombra">
@@ -69,6 +114,7 @@ const guardarGasto = () => {
           v-else
           :presupuesto="presupuesto"
           :disponible="disponible"
+          :gastado="gastado"
         />
       </div>
     </header>
@@ -82,6 +128,7 @@ const guardarGasto = () => {
           :key="gasto.id"
           :gasto="gasto"
           :disponible="disponible"
+          @seleccionar-gasto="seleccionarGasto"
         />
       </div>
       <div class="crear-gasto">
@@ -95,6 +142,8 @@ const guardarGasto = () => {
         v-model:cantidad="gasto.cantidad"
         v-model:categoria="gasto.categoria"
         @guardar-gasto="guardarGasto"
+        :disponible="disponible"
+        :id="gasto.id"
       />
     </main>
   </div>
@@ -128,6 +177,10 @@ h1 {
 }
 h2 {
   font-size: 3rem;
+}
+.fijar {
+  overflow: hidden;
+  height: 100vh;
 }
 header {
   background-color: var(--azul);
