@@ -99,6 +99,15 @@ const reiniciarFormulario = () => {
     fecha: Date.now(),
   });
 };
+const eliminarGasto = (id) => {
+  const indice = gastos.value.findIndex((gasto) => gasto.id === id);
+  if (confirm("¿Estás seguro de eliminar este gasto?")) {
+    gastos.value.splice(indice, 1);
+    cerrarModal();
+  }
+  console.log(id);
+  console.log("eliminando");
+};
 </script>
 
 <template>
@@ -142,6 +151,7 @@ const reiniciarFormulario = () => {
         v-model:cantidad="gasto.cantidad"
         v-model:categoria="gasto.categoria"
         @guardar-gasto="guardarGasto"
+        @eliminar-gasto="eliminarGasto"
         :disponible="disponible"
         :id="gasto.id"
       />

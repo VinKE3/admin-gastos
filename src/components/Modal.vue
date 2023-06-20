@@ -9,6 +9,7 @@ const emit = defineEmits([
   "update:cantidad",
   "update:categoria",
   "guardar-gasto",
+  "eliminar-gasto",
 ]);
 const props = defineProps({
   modal: {
@@ -63,10 +64,6 @@ const agregarGasto = () => {
   //?validamos que el usuario no gaste mas del presupuesto inicial
   if (id) {
     //?tomar en cuenta el gasto ya realizado
-    console.log("id", id);
-    console.log(old);
-    console.log(disponible);
-    console.log(cantidad);
     if (cantidad > old + disponible) {
       error.value = "No puedes gastar mas de lo que tienes";
       setTimeout(() => {
@@ -140,6 +137,14 @@ const agregarGasto = () => {
           :value="isEditing ? 'Editar gasto' : 'Agregar gasto'"
         />
       </form>
+      <button
+        v-if="isEditing"
+        type="button"
+        class="btn-eliminar"
+        @click="$emit('eliminar-gasto')"
+      >
+        Elminar Gasto
+      </button>
     </div>
   </div>
 </template>
@@ -224,5 +229,20 @@ const agregarGasto = () => {
 }
 .nuevo-gasto input[type="submit"]:hover {
   background-color: #2c3ab8;
+}
+.btn-eliminar {
+  padding: 1rem;
+  width: 100%;
+  background-color: #ef4444;
+  font-weight: 700;
+  font-size: 2.3rem;
+  color: var(--blanco);
+  margin-top: 2rem;
+  cursor: pointer;
+  border-radius: 2rem;
+  text-transform: uppercase;
+}
+.btn-eliminar:hover {
+  background-color: #dc2626;
 }
 </style>
