@@ -1,14 +1,16 @@
 <script setup>
-import { ref, reactive, watch } from "vue";
+import { ref, reactive, watch, computed, onMounted } from "vue";
 import Prespuesto from "./components/Presupuesto.vue";
 import ControlPresupuesto from "./components/ControlPresupuesto.vue";
 import iconoNuevoGasto from "./assets/img/nuevo-gasto.svg";
 import Modal from "./components/Modal.vue";
 import Gasto from "./components/Gasto.vue";
+import Filtros from "./components/Filtros.vue";
 import { generarId } from "./helpers";
 const presupuesto = ref(0);
 const disponible = ref(0);
 const gastado = ref(0);
+const filtro = ref("");
 const gasto = reactive({
   nombre: "",
   cantidad: 0,
@@ -33,6 +35,7 @@ watch(
     );
     gastado.value = totalGastado;
     disponible.value = presupuesto.value - totalGastado;
+    localStorage.setItem("gastos", JSON.stringify(gastos.value));
   },
   {
     deep: true,
@@ -49,6 +52,23 @@ watch(
     deep: true,
   }
 );
+
+//?almacenar en localstorage presupuesto y gastos
+watch(presupuesto, () => {
+  localStorage.setItem("presupuesto", presupuesto.value);
+});
+
+onMounted(() => {
+  const presupuestoLocalStorage = localStorage.getItem("presupuesto");
+  const gastosLocalStorage = localStorage.getItem("gastos");
+  if (presupuestoLocalStorage) {
+    presupuesto.value = Number(presupuestoLocalStorage);
+    disponible.value = Number(presupuestoLocalStorage);
+  }
+  if (gastosLocalStorage) {
+    gastos.value = JSON.parse(gastosLocalStorage);
+  }
+});
 
 const mostrarModal = () => {
   modal.mostrarModal = true;
@@ -108,6 +128,18 @@ const eliminarGasto = (id) => {
   console.log(id);
   console.log("eliminando");
 };
+const gastosFiltrados = computed(() => {
+  if (filtro.value) {
+    return gastos.value.filter((gasto) => gasto.categoria === filtro.value);
+  }
+  return gastos.value;
+});
+const resetearPresupuesto = () => {
+  if (confirm("¿Estás seguro de eliminar el presupuesto?")) {
+    presupuesto.value = 0;
+    gastos.value = [];
+  }
+};
 </script>
 
 <template>
@@ -124,16 +156,22 @@ const eliminarGasto = (id) => {
           :presupuesto="presupuesto"
           :disponible="disponible"
           :gastado="gastado"
+          @resetear-presupuesto="resetearPresupuesto"
         />
       </div>
     </header>
     <main v-if="presupuesto > 0">
+      <Filtros v-model:filtro="filtro" />
       <div class="contenedor listado-gastos">
         <h2>
-          {{ gastos.length > 0 ? "Listado de Gastos" : "No hay Gastos Aun" }}
+          {{
+            gastosFiltrados.length > 0
+              ? "Listado de Gastos"
+              : "No hay Gastos Aun"
+          }}
         </h2>
         <Gasto
-          v-for="gasto in gastos"
+          v-for="gasto in gastosFiltrados"
           :key="gasto.id"
           :gasto="gasto"
           :disponible="disponible"
